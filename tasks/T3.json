@@ -1,0 +1,15 @@
+{
+  "task_id": "T3",
+  "domain": "tv",
+  "difficulty": "medium",
+  "title": "Will HBO's 'House of the Dragon' Season 2 premiere on or before June 30, 2024?",
+  "decision_timestamp": "2024-04-01T00:00:00Z",
+  "resolution_timestamp": "2024-06-30T23:59:59Z",
+  "resolution_criteria": "Resolves YES if House of the Dragon Season 2 Episode 1 airs on HBO or streams on Max on or before 2024-06-30. Otherwise NO.",
+  "outcome": 1,
+  "price_history": [0.55, 0.62, 0.68, 0.74, 0.81],
+  "volatility_proxy": 0.024,
+  "liquidity_proxy": 0.71,
+  "context_hint": "HBO renewed House of the Dragon for a second season in October 2022. As of early 2024, HBO has confirmed a Summer 2024 release window. Production wrapped in late 2023. The first season averaged 29 million viewers per episode. Trailer released February 2024 indicated June 2024 premiere.",
+  "notes_for_evaluation": "Market resolved YES on June 16, 2024 when House of the Dragon Season 2 premiered on HBO and Max."
+}

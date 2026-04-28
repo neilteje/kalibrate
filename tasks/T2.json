@@ -1,0 +1,15 @@
+{
+  "task_id": "T2",
+  "domain": "film",
+  "difficulty": "medium",
+  "title": "Will Marvel Studios officially announce Robert Downey Jr. as the actor portraying Doctor Doom for the upcoming Avengers film at San Diego Comic-Con 2024?",
+  "decision_timestamp": "2024-07-01T00:00:00Z",
+  "resolution_timestamp": "2024-07-31T23:59:59Z",
+  "resolution_criteria": "Resolves YES if Marvel Studios officially confirms (via Marvel Studios Hall H presentation or official press release) on or before 2024-07-31 that Robert Downey Jr. will play Victor von Doom (Doctor Doom) in an upcoming Marvel Cinematic Universe Avengers film. Otherwise NO.",
+  "outcome": 1,
+  "price_history": [0.12, 0.18, 0.22, 0.31, 0.42],
+  "volatility_proxy": 0.052,
+  "liquidity_proxy": 0.62,
+  "context_hint": "Marvel Studios is scheduled to present at San Diego Comic-Con Hall H on July 27, 2024. Industry rumors and tracking discussions have circulated about a major casting reveal. Robert Downey Jr. previously played Tony Stark / Iron Man in the MCU through 2019.",
+  "notes_for_evaluation": "Market resolved YES on July 27, 2024 when Marvel Studios announced RDJ as Doctor Doom at SDCC Hall H, with the title 'Avengers: Doomsday' subsequently confirmed."
+}

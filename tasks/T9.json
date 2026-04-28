@@ -1,0 +1,15 @@
+{
+  "task_id": "T9",
+  "domain": "streaming",
+  "difficulty": "medium",
+  "title": "Will Netflix's 'Squid Game' Season 2 reach the #1 position on Netflix's Global Top 10 (Non-English TV) in its premiere week (week ending January 5, 2025)?",
+  "decision_timestamp": "2024-12-15T00:00:00Z",
+  "resolution_timestamp": "2025-01-07T23:59:59Z",
+  "resolution_criteria": "Resolves YES if Squid Game Season 2 is reported by Netflix's Top 10 site (top10.netflix.com) as the #1 entry in the Global Non-English TV category for the weekly chart covering December 30, 2024 to January 5, 2025. Otherwise NO.",
+  "outcome": 1,
+  "price_history": [0.68, 0.72, 0.78, 0.82, 0.85],
+  "volatility_proxy": 0.027,
+  "liquidity_proxy": 0.79,
+  "context_hint": "Squid Game Season 1 (2021) was Netflix's most-watched series ever, with 1.65 billion hours viewed in its first 28 days. Season 2 is releasing globally on December 26, 2024. Significant marketing campaign throughout November-December 2024. Pre-release surveys show high anticipation. Trailer views exceeded 100 million in first 48 hours.",
+  "notes_for_evaluation": "Market resolved YES. Squid Game Season 2 debuted at #1 globally on Netflix's Top 10 in premiere week with 68 million views in first 4 days, breaking debut records."
+}

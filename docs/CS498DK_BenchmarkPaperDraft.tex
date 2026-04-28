@@ -1,0 +1,326 @@
+\documentclass{article} % For LaTeX2e
+\usepackage{iclr2026_conference,times}
+
+\input{math_commands.tex}
+
+\usepackage{hyperref}
+\usepackage{url}
+\usepackage{booktabs}
+\usepackage{multirow}
+\usepackage{array}
+\usepackage{graphicx}
+\usepackage{enumitem}
+\usepackage{xcolor}
+
+\title{POPCAST: A Leakage-Resistant Benchmark for Agentic Forecasting on Pop-Culture Prediction Markets}
+
+% Keep authors anonymous for submission.
+\author{Anonymous Authors \\
+Anonymous Institution \\
+\texttt{anonymous@openreview.net}
+}
+
+\newcommand{\benchmarkname}{POPCAST}
+\newcommand{\kalshi}{Kalshi}
+
+%\iclrfinalcopy
+\begin{document}
+
+\maketitle
+
+\begin{abstract}
+We introduce \benchmarkname{}, a benchmark for evaluating language agents on time-sensitive forecasting tasks grounded in pop-culture prediction markets. Existing agent benchmarks largely emphasize static question answering, tool use, web navigation, or software tasks, but they do not adequately measure whether an agent can form calibrated probabilistic judgments under rapidly changing information conditions while respecting strict temporal constraints. This gap is especially important in domains such as entertainment and celebrity news, where sudden announcements, viral moments, and sentiment shocks can materially change forecast difficulty within hours. \benchmarkname{} addresses this problem through 10 benchmark tasks derived from real pop-culture market settings, each paired with a fixed decision timestamp, bounded information access rules, and explicit scoring criteria. The benchmark is designed to test evidence gathering, temporal reasoning, uncertainty handling, and resistance to post-cutoff information leakage. We describe the task design, evaluation protocol, difficulty distribution, and preliminary validation results, and we position \benchmarkname{} as a reproducible benchmark for studying agentic forecasting in dynamic real-world environments.
+\end{abstract}
+
+\section{Introduction}
+
+Prediction and decision-making in real-world environments rarely occur under static knowledge conditions. Instead, agents must act under uncertainty, synthesize fragmented evidence, and update beliefs as new information arrives. This challenge is particularly acute in pop culture, where outcomes such as award nominations, casting announcements, chart performance, trailer releases, or box-office milestones can be influenced by fast-moving information shocks, public sentiment, and coordinated media attention. In such settings, accurate forecasting requires more than retrieval or summarization alone: an agent must decide what evidence matters, reason about timing and credibility, and translate that evidence into a calibrated probability.
+
+Existing benchmarks do not adequately capture this setting. Many popular benchmarks for language agents focus on static knowledge tasks, software environments, tool use, or question answering with single correct answers. While these benchmarks are valuable, they are not designed to evaluate an agent's ability to make probabilistic judgments under strict temporal constraints. In particular, they often do not model the central difficulty of forecasting benchmarks: the agent must reason using only information that would have been available at a specific historical decision point. Without this constraint, benchmark performance can be inflated by temporal leakage, where the model or retrieval system accesses information published after the decision time.
+
+We propose \benchmarkname{}, a benchmark for agentic forecasting on pop-culture prediction tasks designed around this temporal realism requirement. Our benchmark is motivated by prediction-market style questions in entertainment domains, where sudden news shocks, hype cycles, and asymmetric information create forecasting challenges that are both realistic and difficult for current agents. Each task in \benchmarkname{} is paired with a clearly defined decision timestamp, an outcome specification, and an evaluation procedure that can be used independently of any particular agent implementation. The benchmark is deliberately benchmark-first rather than agent-first: the goal is to provide a standalone evaluation resource that another researcher could use to test their own forecasting agent.
+
+\benchmarkname{} makes four main contributions. First, it introduces a benchmark domain that differs meaningfully from static agent evaluations by centering probabilistic forecasting in a high-volatility information environment. Second, it operationalizes temporal validity through explicit cutoff rules intended to reduce leakage from post-decision information. Third, it includes a diverse set of tasks spanning multiple pop-culture subdomains, allowing evaluation across different kinds of evidence and uncertainty. Fourth, it defines a simple but reproducible evaluation protocol based on forecast quality, task success, and reporting practices suitable for small-scale academic benchmarking.
+
+At a high level, \benchmarkname{} contains 10 tasks constructed from real or realistic pop-culture market scenarios. Tasks vary in difficulty depending on factors such as event ambiguity, time-to-resolution, evidence sparsity, and susceptibility to sudden shocks. Agents receive a task description, a decision timestamp, and structured instructions specifying the required output format. They must produce a probability forecast and concise rationale while adhering to benchmark information constraints. We then score performance using outcome-based forecast metrics and summarize results across tasks by difficulty and domain.
+
+The rest of the paper is organized as follows. Section~\ref{sec:related} situates \benchmarkname{} relative to prior work in benchmarking and forecasting. Section~\ref{sec:design} describes the benchmark design, task scope, and representative examples. Section~\ref{sec:eval} presents the evaluation protocol. Section~\ref{sec:validation} provides preliminary validation evidence. Section~\ref{sec:conclusion} concludes with limitations and future directions.
+
+\section{Related Work}
+\label{sec:related}
+
+\benchmarkname{} sits at the intersection of two lines of work: benchmarks for general-purpose language agents and benchmarks for probabilistic forecasting. Existing agent benchmarks such as GAIA evaluate broad assistant capabilities including reasoning, multimodal understanding, web use, and tool use on real-world questions with short, verifiable answers \citep{mialon2023gaia}. Similarly, WebArena studies agents in realistic browser environments that require multi-step interaction and execution over web interfaces \citep{zhou2024webarena}. These benchmarks are valuable for measuring actionability and robustness, but they are not designed around probabilistic forecasting under historical information constraints. In particular, they typically evaluate whether an agent can arrive at a correct answer or complete a task, rather than whether it can produce a calibrated probability estimate about an unresolved future outcome.
+
+A second line of work evaluates language models on future-event forecasting. Autocast introduced a benchmark for forecasting real-world events using dated news corpora and explicit temporal control, helping reduce contamination from future information \citep{zou2022forecasting}. More recently, Halawi et al.\ study whether retrieval-augmented language models can approach competitive human forecasters on questions drawn from forecasting platforms, using proper scoring rules and post-cutoff test sets to evaluate end-to-end forecasting quality \citep{halawi2024approaching}. FOReCAst extends this direction by explicitly benchmarking both outcome prediction and confidence calibration, emphasizing that useful forecasting systems must not only be accurate but also well-calibrated in their stated confidence \citep{yuan2025forecast}.
+
+\benchmarkname{} differs from these benchmarks in both domain and task structure. Relative to GAIA and WebArena, our benchmark is not a general assistant or browser benchmark; it targets a narrower but practically important regime in which agents must issue probabilistic judgments in response to fast-moving, high-volatility information environments. Relative to Autocast, FOReCAst, and broader forecasting datasets collected from platforms such as Metaculus or related forecasting markets, our benchmark focuses specifically on pop-culture prediction tasks, where sudden announcements, viral media cycles, and sentiment shocks can change the evidentiary landscape within hours. This makes temporal discipline especially important: a benchmark can appear artificially easy if an agent or retriever accesses information published after the decision point.
+
+More broadly, our benchmark is motivated by work on prediction markets and competitive forecasting, which treat probability estimates as first-class outputs and evaluate them using proper scoring rules rather than categorical accuracy alone. \benchmarkname{} adopts this forecasting perspective but contributes a benchmark that is intentionally benchmark-first, leakage-aware, and specialized to entertainment and celebrity-information settings. This fills a gap between broad agent benchmarks and general forecasting benchmarks by isolating a domain where information shocks, hype, and ambiguous evidence make calibrated agentic forecasting unusually challenging.
+
+\section{Benchmark Design}
+\label{sec:design}
+
+\subsection{Task Domain and Scope}
+
+\benchmarkname{} evaluates agent performance on probabilistic forecasting tasks grounded in pop-culture prediction scenarios. The benchmark is inspired by prediction-market style questions in domains such as film, television, music, celebrity activity, and entertainment awards. These domains are characterized by rapid information updates, high levels of speculation, and frequent exogenous shocks (e.g., announcements, leaks, viral trends), making them a challenging environment for agentic reasoning.
+
+The benchmark is designed to test the following agent capabilities:
+\begin{itemize}[noitemsep]
+    \item \textbf{Probabilistic reasoning:} generating calibrated probability estimates for future events
+    \item \textbf{Evidence synthesis:} identifying and integrating relevant signals from heterogeneous information sources
+    \item \textbf{Temporal reasoning:} reasoning under a fixed decision-time constraint using only information available at that time
+    \item \textbf{Uncertainty handling:} appropriately expressing uncertainty in ambiguous or low-information settings
+\end{itemize}
+
+Each task is defined by a \textit{decision timestamp}, after which no information should be used to inform the forecast. This constraint is central to the benchmark and is intended to mitigate temporal leakage, a known issue in forecasting evaluations.
+
+\textbf{In scope} are tasks where outcomes are well-defined binary or categorical events with clear resolution criteria (e.g., whether a film exceeds a box office threshold by a certain date, whether an artist achieves a chart position, or whether a nominee appears in an awards list). 
+
+\textbf{Out of scope} are tasks requiring private or non-public data, purely subjective judgments (e.g., ``best performance'' without a formal metric), or tasks whose outcomes cannot be unambiguously verified.
+
+\textbf{Framework.} \benchmarkname{} is constructed as a custom benchmark and does not directly follow an existing benchmark framework. However, it adopts principles from prior forecasting benchmarks such as Autocast and FOReCAst, including temporal cutoff discipline and outcome-based scoring, while extending them to a domain with higher volatility and more frequent information shocks.
+
+\subsection{Task Descriptions}
+
+\subsubsection{Overview of Tasks}
+
+The benchmark consists of 10 tasks spanning multiple pop-culture subdomains. Table~\ref{tab:tasks} summarizes the task set.
+
+\begin{table}[t]
+\centering
+\caption{Summary of benchmark tasks}
+\label{tab:tasks}
+\begin{tabular}{lccc}
+\toprule
+\textbf{Task ID} & \textbf{Domain} & \textbf{Type} & \textbf{Difficulty} \\
+\midrule
+T1 & Film (Box Office) & Threshold Event & Easy \\
+T2 & Film (Casting) & Binary Event & Medium \\
+T3 & Television (Release) & Timing Event & Medium \\
+T4 & Music (Chart Performance) & Rank Threshold & Hard \\
+T5 & Music (Album Release) & Binary Event & Easy \\
+T6 & Awards (Nominations) & Set Membership & Hard \\
+T7 & Awards (Wins) & Binary Event & Medium \\
+T8 & Celebrity Activity & Binary Event & Hard \\
+T9 & Streaming (Viewership) & Threshold Event & Medium \\
+T10 & Viral Media Event & Binary Event & Hard \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Each task is paired with:
+\begin{itemize}[noitemsep]
+    \item A natural language description of the event
+    \item A fixed decision timestamp
+    \item A clearly defined resolution criterion
+    \item Instructions specifying the required output format
+\end{itemize}
+
+\subsubsection{Representative Task Examples}
+
+\paragraph{Example 1: Box Office Threshold Prediction}
+
+\textbf{Input:}
+\begin{itemize}[noitemsep]
+    \item Event: ``Will Film X exceed \$500M global box office by Date Y?''
+    \item Decision timestamp: $t_0$
+    \item Context: Optional background description (e.g., genre, prior franchise performance)
+\end{itemize}
+
+\textbf{Expected Output:}
+A probability $p \in [0,1]$ along with a short natural language justification (2--4 sentences) describing key evidence.
+
+\textbf{Success Criteria:}
+Forecasts are evaluated using a proper scoring rule (e.g., Brier score) based on the realized outcome.
+
+\textbf{Challenge:}
+This task requires reasoning about historical performance, release timing, competition, and market trends while accounting for uncertainty in audience reception and external factors.
+
+\paragraph{Example 2: Awards Nomination Prediction}
+
+\textbf{Input:}
+\begin{itemize}[noitemsep]
+    \item Event: ``Will Actor Y receive a nomination for Award Z?''
+    \item Decision timestamp: $t_0$
+    \item Context: Known performances, early reviews, prior award history
+\end{itemize}
+
+\textbf{Expected Output:}
+A probability estimate with a concise justification grounded in available evidence.
+
+\textbf{Success Criteria:}
+Binary correctness of outcome combined with probabilistic accuracy.
+
+\textbf{Challenge:}
+Awards predictions are influenced by subjective factors, campaign dynamics, and incomplete information, making calibration difficult.
+
+\paragraph{Example 3: Music Chart Performance}
+
+\textbf{Input:}
+\begin{itemize}[noitemsep]
+    \item Event: ``Will Song S reach Top 10 on Chart C within 2 weeks?''
+    \item Decision timestamp: $t_0$
+    \item Context: Streaming trends, artist popularity, recent releases
+\end{itemize}
+
+\textbf{Expected Output:}
+Probability estimate with justification referencing relevant signals.
+
+\textbf{Success Criteria:}
+Evaluated using outcome-based scoring.
+
+\textbf{Challenge:}
+Chart performance is highly sensitive to viral dynamics and external shocks, making forecasting unstable and time-sensitive.
+
+\subsection{Task Design Principles}
+
+The benchmark is guided by three core principles:
+
+\textbf{(1) Temporal validity.} Each task enforces a strict decision timestamp to prevent access to post-event information. This ensures that forecasts reflect realistic information constraints.
+
+\textbf{(2) Diversity of signals.} Tasks span multiple domains and require integrating heterogeneous evidence (e.g., historical data, sentiment, trends, and announcements).
+
+\textbf{(3) Controlled difficulty.} Tasks are designed to vary along axes such as ambiguity, time horizon, and susceptibility to information shocks.
+
+To ensure coverage, we selected tasks across five domains (film, television, music, awards, and celebrity activity), with multiple task types (binary, threshold, ranking). Difficulty was calibrated by qualitatively assessing:
+\begin{itemize}[noitemsep]
+    \item clarity of available evidence
+    \item predictability of outcome
+    \item sensitivity to external shocks
+    \item time-to-resolution
+\end{itemize}
+
+\subsection{Difficulty Distribution}
+
+Tasks are categorized into three difficulty levels: easy, medium, and hard. 
+
+\begin{itemize}[noitemsep]
+    \item \textbf{Easy:} outcomes with strong prior signals and low ambiguity
+    \item \textbf{Medium:} moderate uncertainty with multiple plausible outcomes
+    \item \textbf{Hard:} high uncertainty and strong dependence on unpredictable events
+\end{itemize}
+
+Table~\ref{tab:tasks} shows the distribution:
+\begin{itemize}[noitemsep]
+    \item Easy: 2 tasks
+    \item Medium: 4 tasks
+    \item Hard: 4 tasks
+\end{itemize}
+
+Difficulty labels were assigned through manual inspection of task characteristics rather than empirical calibration, and will be refined in future iterations based on observed agent performance.
+
+\section{Evaluation Protocol}
+\label{sec:eval}
+
+We evaluate agents on \benchmarkname{} using outcome-based forecasting metrics, combined with simple reporting standards to ensure reproducibility and comparability.
+
+\textbf{Metrics.} The primary metric is the \textbf{Brier score}, which measures the squared error between the predicted probability and the realized outcome. For a binary event with prediction $p$ and outcome $y \in \{0,1\}$, the Brier score is $(p - y)^2$. Lower values indicate better performance. We also report:
+\begin{itemize}[noitemsep]
+    \item \textbf{Accuracy:} fraction of correct directional predictions (i.e., $p > 0.5$ for true outcomes)
+    \item \textbf{Calibration:} qualitative assessment of whether probabilities align with empirical frequencies across tasks
+    \item \textbf{Abstention rate (optional):} frequency of near-uncertain predictions (e.g., $p \in [0.45, 0.55]$)
+\end{itemize}
+
+\textbf{Scoring.} Each task is scored independently using the Brier score. No partial credit is assigned beyond the probabilistic scoring rule. Justifications are not directly scored but may be used for qualitative analysis.
+
+\textbf{Aggregation.} Overall performance is computed as the mean Brier score across all tasks. We additionally report scores broken down by difficulty level (easy, medium, hard) and by domain (film, music, awards, etc.) to capture performance variation across task types.
+
+\textbf{Reporting.} To ensure consistent comparisons, agents should report:
+\begin{itemize}[noitemsep]
+    \item predicted probability for each task
+    \item final outcome and per-task Brier score
+    \item aggregate Brier score across all tasks
+    \item breakdown by difficulty and domain
+\end{itemize}
+
+Agents may optionally report inference cost (tokens, API calls) and latency, but these are not required for benchmark scoring.
+
+\section{Benchmark Validation}
+\label{sec:validation}
+
+We perform preliminary validation to ensure that \benchmarkname{} is well-specified, diverse, and capable of differentiating between agent behaviors.
+
+\textbf{Pilot testing.} We evaluated five systems against \benchmarkname{}: a random/prior baseline ($p=0.5$); a single-prompt frontier-LLM baseline (GPT-4o without tool use); a tool-enabled frontier baseline (GPT-4o with budgeted web search); a market-only ablation (a forecasting LLM operating only on the market state); and a full agentic system. Each non-deterministic system was run with three trials per task, totaling 130 runs. Mean Brier scores were $0.250$ (random), $0.103$ (single-prompt), $0.147$ (tool-enabled frontier), $0.074$ (market-only ablation), and $0.138$ (full agentic system). All systems clearly beat the random baseline, confirming that tasks carry meaningful predictive signal; the spread between non-random systems (range $0.074$--$0.147$) confirms that the benchmark differentiates between modeling approaches.
+
+\textbf{Task quality.} Each task was manually reviewed to ensure that:
+\begin{itemize}[noitemsep]
+    \item the outcome is clearly defined and externally verifiable
+    \item the decision timestamp is unambiguous
+    \item the task description contains sufficient context for forecasting
+\end{itemize}
+We also verified that tasks do not require private or inaccessible data.
+
+\textbf{Inter-rater reliability.} Since evaluation is based on objective event outcomes rather than subjective judgment, inter-rater disagreement is minimal. Human involvement is limited to verifying task clarity and correctness of resolution criteria.
+
+\textbf{Difficulty stratification.} The benchmark differentiates difficulty levels in pilot testing. On easy tasks, all non-random systems achieved Brier $\le 0.05$. On medium tasks, Brier ranged from $0.006$ to $0.116$ across systems. On hard tasks, the spread widened to $0.114$--$0.361$, with hard-task performance becoming the primary discriminator between systems. This monotonic difficulty progression validates that our easy/medium/hard labels are meaningful.
+
+\textbf{Leakage discipline.} All retrieved evidence in the agentic and tool-enabled systems was filtered server-side by publication timestamp; documents whose publication date was on or after the task's decision timestamp were dropped before reaching any agent module. Across 60 tool-using runs, we observed no instance of a returned document violating the cutoff. The single-prompt frontier baseline does not retrieve evidence but uses GPT-4o, whose pretraining data may include outcome-relevant information for some historical events; we identify this as a known threat to validity and report results across multiple agent tiers (GPT-4o-mini for the agent and ablation, GPT-4o for the prompting baselines) to triangulate the effect.
+
+\section{Conclusion}
+\label{sec:conclusion}
+
+We introduced \benchmarkname{}, a benchmark for evaluating language agents on probabilistic forecasting tasks in pop-culture domains. The benchmark focuses on temporal validity, information shock sensitivity, and calibrated decision-making, which are not well captured by existing agent benchmarks.
+
+By providing clearly specified tasks, strict decision-time constraints, and a reproducible evaluation protocol, \benchmarkname{} enables systematic study of agent behavior in dynamic real-world settings. We expect this benchmark to be useful for researchers studying forecasting, tool-augmented agents, and decision-making under uncertainty.
+
+Future work includes expanding the number of tasks, incorporating multi-step or sequential forecasting settings, and introducing stronger controls for information access. We also plan to refine difficulty calibration using empirical results from a wider range of agents.
+\bibliography{iclr2026_conference}
+\bibliographystyle{iclr2026_conference}
+
+\appendix
+\section{Appendix}
+\subsection{Full Task Specifications}
+
+We provide full specifications for all benchmark tasks to enable reproducibility. Each task includes the following fields:
+\begin{itemize}[noitemsep]
+    \item \textbf{Task ID}
+    \item \textbf{Event description}
+    \item \textbf{Decision timestamp}
+    \item \textbf{Resolution criteria}
+    \item \textbf{Allowed information constraints}
+\end{itemize}
+
+\paragraph{Example Task (T1)}
+
+\textbf{Event:} Will Film X exceed \$500M global box office by Date Y?
+
+\textbf{Decision timestamp:} YYYY-MM-DD HH:MM UTC
+
+\textbf{Resolution criteria:} The task resolves as true if verified box office data exceeds \$500M by the specified date, and false otherwise.
+
+\textbf{Information constraint:} Only information available prior to the decision timestamp may be used. Any use of post-cutoff information is considered leakage.
+
+\subsection{Output Format Specification}
+
+Agents are required to produce outputs in the following format:
+
+\begin{verbatim}
+{
+  "probability": float in [0,1],
+  "justification": string (2-4 sentences)
+}
+\end{verbatim}
+
+Submissions that do not follow this format may be excluded from evaluation.
+
+\subsection{Scoring Details}
+
+We compute the Brier score for each task:
+\[
+\text{Brier}(p, y) = (p - y)^2
+\]
+
+where $p$ is the predicted probability and $y \in \{0,1\}$ is the outcome.
+
+The final score is the mean Brier score across all tasks.
+
+\subsection{Implementation Notes}
+
+To ensure reproducibility, we recommend:
+\begin{itemize}[noitemsep]
+    \item logging all model outputs and timestamps
+    \item fixing prompts across runs
+    \item enforcing consistent decision timestamps across evaluations
+\end{itemize}
+
+\end{document}

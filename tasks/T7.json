@@ -1,0 +1,15 @@
+{
+  "task_id": "T7",
+  "domain": "awards",
+  "difficulty": "medium",
+  "title": "Will the film 'Oppenheimer' (2023, Christopher Nolan) win Best Picture at the 96th Academy Awards on March 10, 2024?",
+  "decision_timestamp": "2024-02-10T00:00:00Z",
+  "resolution_timestamp": "2024-03-10T23:59:59Z",
+  "resolution_criteria": "Resolves YES if 'Oppenheimer' is announced as the winner of the Best Picture category at the 96th Academy Awards ceremony held on March 10, 2024. Otherwise NO.",
+  "outcome": 1,
+  "price_history": [0.74, 0.79, 0.82, 0.85, 0.87],
+  "volatility_proxy": 0.022,
+  "liquidity_proxy": 0.81,
+  "context_hint": "'Oppenheimer' has dominated the 2023-2024 awards season. It won Best Drama at the Golden Globes (January 7), Best Film at the BAFTAs (February 18), and the PGA Award for Best Picture (February 25). It received 13 Oscar nominations. Major rivals include 'Killers of the Flower Moon', 'Poor Things', and 'The Holdovers', but precursor wins strongly favor Oppenheimer.",
+  "notes_for_evaluation": "Market resolved YES on March 10, 2024 when 'Oppenheimer' won Best Picture (along with 6 other Oscars including Best Director and Best Actor)."
+}

@@ -1,0 +1,15 @@
+{
+  "task_id": "T10",
+  "domain": "viral",
+  "difficulty": "hard",
+  "title": "Will Charli XCX's album 'Brat' debut at #1 on the Billboard 200 chart in its release week (chart dated June 22, 2024)?",
+  "decision_timestamp": "2024-05-20T00:00:00Z",
+  "resolution_timestamp": "2024-06-22T23:59:59Z",
+  "resolution_criteria": "Resolves YES if Billboard reports 'Brat' by Charli XCX at the #1 position on the Billboard 200 albums chart dated June 22, 2024 (the chart covering its release week). Otherwise NO.",
+  "outcome": 0,
+  "price_history": [0.43, 0.48, 0.52, 0.45, 0.39],
+  "volatility_proxy": 0.058,
+  "liquidity_proxy": 0.55,
+  "context_hint": "Charli XCX is releasing 'Brat' on June 7, 2024 amid significant viral momentum on TikTok and Twitter ('brat summer' meme). However, her release week competes with Eminem's 'The Death of Slim Shady (Coup de Grace)' set for July 12 (out of week) and Taylor Swift's 'The Tortured Poets Department' which has remained at #1 for weeks since April 2024 with strong sales each week. Pre-order numbers for Brat are strong but a fraction of Swift's typical first-week numbers.",
+  "notes_for_evaluation": "Market resolved NO. 'Brat' debuted at #3 on the Billboard 200, blocked by Taylor Swift's 'The Tortured Poets Department' (still at #1) and Billie Eilish's 'Hit Me Hard and Soft'. Despite enormous cultural impact and 'brat summer' becoming a defining 2024 phenomenon, pure sales numbers favored higher-volume releases."
+}

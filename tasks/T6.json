@@ -1,0 +1,15 @@
+{
+  "task_id": "T6",
+  "domain": "awards",
+  "difficulty": "hard",
+  "title": "Will The Weeknd (Abel Tesfaye) receive at least one nomination at the 67th Grammy Awards (2025 ceremony)?",
+  "decision_timestamp": "2024-10-01T00:00:00Z",
+  "resolution_timestamp": "2024-11-08T23:59:59Z",
+  "resolution_criteria": "Resolves YES if the Recording Academy includes The Weeknd in any category nomination announced for the 67th Annual Grammy Awards (held February 2, 2025), as published in the official Recording Academy nominations announcement. Otherwise NO.",
+  "outcome": 0,
+  "price_history": [0.34, 0.31, 0.29, 0.27, 0.25],
+  "volatility_proxy": 0.029,
+  "liquidity_proxy": 0.58,
+  "context_hint": "The Weeknd publicly criticized the Recording Academy in 2020 after his album 'After Hours' received zero nominations and stated he would no longer submit his music for Grammy consideration. He has not retracted these statements. His 2024 release 'Open Hearts / Dancing in the Flames' has been technically eligible for the 2025 ceremony, but submission status is unclear. The Recording Academy nominations announcement is scheduled for November 8, 2024.",
+  "notes_for_evaluation": "Market resolved NO on November 8, 2024 when the 67th Grammy Awards nominations were announced and The Weeknd received zero nominations, consistent with his ongoing boycott."
+}

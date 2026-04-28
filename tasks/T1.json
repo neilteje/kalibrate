@@ -1,0 +1,15 @@
+{
+  "task_id": "T1",
+  "domain": "film",
+  "difficulty": "easy",
+  "title": "Will the film 'Barbie' (2023, Greta Gerwig) exceed $1.0 billion in global box office by August 31, 2023?",
+  "decision_timestamp": "2023-07-15T00:00:00Z",
+  "resolution_timestamp": "2023-08-31T23:59:59Z",
+  "resolution_criteria": "Resolves YES if Box Office Mojo or The Numbers reports cumulative worldwide gross >= $1,000,000,000 USD on or before 2023-08-31. Otherwise NO.",
+  "outcome": 1,
+  "price_history": [0.41, 0.48, 0.55, 0.63, 0.72],
+  "volatility_proxy": 0.038,
+  "liquidity_proxy": 0.88,
+  "context_hint": "Tracking poll for an upcoming Warner Bros. release directed by Greta Gerwig and starring Margot Robbie. Pre-release tracking projections released June 2023 estimated $90-120M opening weekend in North America. Theatrical release date is July 21, 2023.",
+  "notes_for_evaluation": "Market resolved YES on August 6, 2023 when Barbie passed the $1B mark globally. Final gross exceeded $1.4B."
+}

@@ -1,0 +1,15 @@
+{
+  "task_id": "T8",
+  "domain": "celebrity",
+  "difficulty": "hard",
+  "title": "Will Taylor Swift and Travis Kelce publicly announce an engagement on or before December 31, 2024?",
+  "decision_timestamp": "2024-09-01T00:00:00Z",
+  "resolution_timestamp": "2024-12-31T23:59:59Z",
+  "resolution_criteria": "Resolves YES if either Taylor Swift or Travis Kelce, or their official representatives, publicly confirm an engagement (e.g., via official social media post, official press statement, or confirmed magazine cover story) on or before 2024-12-31. Speculative tabloid reports without official confirmation do not resolve YES. Otherwise NO.",
+  "outcome": 0,
+  "price_history": [0.28, 0.32, 0.35, 0.30, 0.27],
+  "volatility_proxy": 0.041,
+  "liquidity_proxy": 0.64,
+  "context_hint": "Taylor Swift and Travis Kelce went public with their relationship in September 2023. The Eras Tour is scheduled to conclude on December 8, 2024 in Vancouver. NFL season runs through early February 2025 with Super Bowl on February 9. Various tabloid speculation throughout summer 2024 about engagement plans, but no official statements from either party.",
+  "notes_for_evaluation": "Market resolved NO. The couple did not announce an engagement during 2024. The actual engagement was announced in late August 2025, well after the resolution date."
+}

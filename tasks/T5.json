@@ -1,0 +1,15 @@
+{
+  "task_id": "T5",
+  "domain": "music",
+  "difficulty": "easy",
+  "title": "Will Taylor Swift release her album 'The Tortured Poets Department' on April 19, 2024 as previously announced?",
+  "decision_timestamp": "2024-03-01T00:00:00Z",
+  "resolution_timestamp": "2024-04-19T23:59:59Z",
+  "resolution_criteria": "Resolves YES if 'The Tortured Poets Department' becomes commercially available on at least one major streaming or purchase platform (Spotify, Apple Music, Amazon Music, or physical purchase) on April 19, 2024. Otherwise NO.",
+  "outcome": 1,
+  "price_history": [0.78, 0.83, 0.86, 0.89, 0.91],
+  "volatility_proxy": 0.018,
+  "liquidity_proxy": 0.92,
+  "context_hint": "Taylor Swift announced 'The Tortured Poets Department' as her 11th studio album at the Grammy Awards on February 4, 2024, with a confirmed release date of April 19, 2024. Pre-orders are live across all major retailers. Promotional materials and album cover have been released.",
+  "notes_for_evaluation": "Market resolved YES on April 19, 2024 when the album was released as scheduled across all major platforms."
+}

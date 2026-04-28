@@ -1,0 +1,15 @@
+{
+  "task_id": "T4",
+  "domain": "music",
+  "difficulty": "hard",
+  "title": "Will Sabrina Carpenter's song 'Espresso' reach #1 on the Billboard Hot 100 chart on or before August 31, 2024?",
+  "decision_timestamp": "2024-06-15T00:00:00Z",
+  "resolution_timestamp": "2024-08-31T23:59:59Z",
+  "resolution_criteria": "Resolves YES if 'Espresso' by Sabrina Carpenter is reported by Billboard as reaching the #1 position on the Hot 100 chart in any weekly issue dated on or before 2024-08-31. Otherwise NO.",
+  "outcome": 0,
+  "price_history": [0.48, 0.52, 0.46, 0.41, 0.38],
+  "volatility_proxy": 0.045,
+  "liquidity_proxy": 0.66,
+  "context_hint": "'Espresso' was released April 11, 2024 and entered the Billboard Hot 100 at #16. As of June 2024 it has peaked at #4 on the Hot 100, blocked by Kendrick Lamar's 'Not Like Us' (#1) and Shaboozey's 'A Bar Song (Tipsy)' which is rapidly rising. Carpenter's album 'Short n' Sweet' is scheduled for August 2024 release.",
+  "notes_for_evaluation": "Market resolved NO. 'Espresso' peaked at #3 on the Hot 100 throughout summer 2024 and was blocked by 'A Bar Song (Tipsy)' and 'Not Like Us' from reaching #1."
+}
