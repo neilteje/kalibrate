@@ -7,6 +7,7 @@ This repo contains:
 - The POPCAST benchmark (`tasks/T1.json` ... `tasks/T10.json`)
 - Four baselines (random, single-prompt LLM, tool-enabled frontier model, market-only ablation)
 - A full evaluation harness with proper scoring (Brier, log loss, task success rate)
+- A Kalshi Demo integration that fetches live demo markets and runs KALIBRATE forecasts
 - LaTeX-ready report tables for our papers in `docs/`
 
 ## Setup
@@ -43,9 +44,46 @@ kalibrate/
   eval/
     run_eval.py          # main evaluation script
     report.py            # tables + LaTeX output
+  kalshi/
+    client.py            # signed Kalshi Demo API client
+    live_state.py        # live market -> KALIBRATE market state
+    forecast.py          # CLI for live Demo forecasting
   results/               # raw run JSONs (gitignored)
   docs/                  # papers (LaTeX)
 ```
+
+## Kalshi Demo Integration
+
+Kalshi Demo API root is `https://demo-api.kalshi.co/trade-api/v2`. Authenticated requests are RSA-PSS signed with:
+
+- `KALSHI-ACCESS-KEY`
+- `KALSHI-ACCESS-TIMESTAMP`
+- `KALSHI-ACCESS-SIGNATURE`
+
+The local client follows Kalshi's documented signing flow: sign `timestamp + HTTP_METHOD + path_without_query`, where the signed path includes `/trade-api/v2/...`.
+
+### Check Demo balance
+
+```bash
+python3 -m kalshi.forecast --balance
+```
+
+If this returns `token_authentication_failure`, the saved key does not authenticate against Demo. Market listing and forecasting can still use public Demo market data, but portfolio endpoints require a valid Demo API key.
+
+### List open Demo markets
+
+```bash
+python3 -m kalshi.forecast --list --limit 10
+python3 -m kalshi.forecast --list --query sports --limit 20
+```
+
+### Forecast one live Demo market
+
+```bash
+python3 -m kalshi.forecast --ticker KXMLBTOTAL-26APR291310TBCLE-9 --tool-budget 0
+```
+
+Use `--tool-budget 1` or higher to let KALIBRATE retrieve external evidence through Tavily. By default, live forecasts still output the model's committed probability even if the Risk Controller raises a risk flag. Add `--abstain` to make the risk controller force uncertain forecasts to `0.5`.
 
 ## Running the Benchmark
 
