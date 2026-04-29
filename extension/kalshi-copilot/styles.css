@@ -1,0 +1,135 @@
+#kalshi-copilot-root {
+  all: initial;
+}
+
+.kc-button {
+  position: fixed;
+  right: 18px;
+  bottom: 18px;
+  z-index: 999999;
+  border: none;
+  border-radius: 999px;
+  padding: 10px 14px;
+  background: linear-gradient(135deg, #0f4ccf, #2563eb);
+  color: #fff;
+  font: 600 13px/1.2 -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  cursor: pointer;
+  box-shadow: 0 10px 26px rgba(37, 99, 235, 0.35);
+}
+
+.kc-panel {
+  position: fixed;
+  right: 18px;
+  bottom: 64px;
+  width: 390px;
+  max-height: 72vh;
+  z-index: 999999;
+  background: linear-gradient(180deg, #0b1323 0%, #0e1b34 100%);
+  color: #f3f4f6;
+  border: 1px solid #284173;
+  border-radius: 12px;
+  box-shadow: 0 18px 50px rgba(0, 0, 0, 0.45);
+  overflow: hidden;
+  display: none;
+  font: 13px/1.4 -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
+
+.kc-panel.kc-open {
+  display: block;
+}
+
+.kc-header,
+.kc-footer {
+  padding: 10px 12px;
+  border-bottom: 1px solid #223457;
+}
+
+.kc-footer {
+  border-top: 1px solid #223457;
+  border-bottom: 0;
+}
+
+.kc-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.kc-title {
+  font-weight: 700;
+  letter-spacing: 0.2px;
+}
+
+.kc-status {
+  font-size: 12px;
+  color: #9cb5df;
+}
+
+.kc-content {
+  max-height: 45vh;
+  overflow: auto;
+  padding: 10px 12px;
+}
+
+.kc-content::-webkit-scrollbar {
+  width: 8px;
+}
+
+.kc-content::-webkit-scrollbar-thumb {
+  background: rgba(147, 197, 253, 0.4);
+  border-radius: 999px;
+}
+
+.kc-market {
+  border: 1px solid #2a4270;
+  border-radius: 10px;
+  padding: 9px;
+  margin-bottom: 8px;
+  background: rgba(17, 35, 65, 0.72);
+}
+
+.kc-market-title {
+  font-weight: 600;
+  margin-bottom: 5px;
+  color: #e2ecff;
+}
+
+.kc-market-meta {
+  color: #9eb3d8;
+  margin-bottom: 6px;
+  font-size: 12px;
+}
+
+.kc-row {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.kc-row input {
+  width: 64px;
+  border: 1px solid #3e5f9c;
+  background: #0b1a33;
+  color: #f3f4f6;
+  border-radius: 6px;
+  padding: 4px 6px;
+  font-size: 12px;
+}
+
+.kc-row button,
+.kc-footer button {
+  border: 1px solid #3f63a6;
+  background: #19335f;
+  color: #f9fafb;
+  border-radius: 6px;
+  padding: 4px 8px;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.kc-result {
+  margin-top: 7px;
+  font-size: 12px;
+  color: #dce8ff;
+  white-space: pre-wrap;
+}

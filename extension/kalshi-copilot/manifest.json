@@ -1,0 +1,18 @@
+{
+  "manifest_version": 3,
+  "name": "Kalshi Copilot (Local)",
+  "version": "0.1.0",
+  "description": "Overlay copilot for Kalshi Demo markets powered by local KALIBRATE.",
+  "content_scripts": [
+    {
+      "matches": ["https://demo.kalshi.co/*"],
+      "js": ["content.js"],
+      "css": ["styles.css"],
+      "run_at": "document_idle"
+    }
+  ],
+  "host_permissions": [
+    "http://127.0.0.1:8765/*",
+    "http://localhost:8765/*"
+  ]
+}

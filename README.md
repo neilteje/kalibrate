@@ -85,6 +85,28 @@ python3 -m kalshi.forecast --ticker KXMLBTOTAL-26APR291310TBCLE-9 --tool-budget 
 
 Use `--tool-budget 1` or higher to let KALIBRATE retrieve external evidence through Tavily. By default, live forecasts still output the model's committed probability even if the Risk Controller raises a risk flag. Add `--abstain` to make the risk controller force uncertain forecasts to `0.5`.
 
+### Kalshi Copilot browser overlay (Demo page)
+
+This repo now includes a local Chrome extension overlay that appears on `https://demo.kalshi.co/*`, scrapes visible market cards/tickers, and calls your local KALIBRATE runtime for forecasts.
+
+1) Start the local copilot bridge:
+
+```bash
+python3 -m kalshi.copilot_server --port 8765 --tool-budget 1
+```
+
+2) Load extension in Chrome:
+- Open `chrome://extensions`
+- Enable **Developer mode**
+- Click **Load unpacked**
+- Select `extension/kalshi-copilot`
+
+3) Open the Kalshi Demo page and click the floating **Kalshi Copilot** button.
+- Click **Rescan Markets** to detect visible open markets.
+- Click **Predict** on any detected market card.
+- If ticker lookup succeeds, forecasts use live Kalshi API state (`source=kalshi_api`).
+- If ticker extraction fails, it falls back to page text context (`source=page_only` or `source=page_fallback`).
+
 ## Running the Benchmark
 
 ### Validate task files
