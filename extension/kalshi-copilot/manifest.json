@@ -5,7 +5,11 @@
   "description": "Overlay copilot for Kalshi Demo markets powered by local KALIBRATE.",
   "content_scripts": [
     {
-      "matches": ["https://demo.kalshi.co/*"],
+      "matches": [
+        "https://kalshi.com/*",
+        "https://*.kalshi.com/*",
+        "https://demo.kalshi.co/*"
+      ],
       "js": ["content.js"],
       "css": ["styles.css"],
       "run_at": "document_idle"
