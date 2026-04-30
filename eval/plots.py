@@ -1,5 +1,8 @@
 """Generate publication-quality plots for the POPCAST benchmark evaluation.
 
+Requires the sibling `pretty-plots` repo (``../pretty-plots/utils.py``) for
+matplotlib defaults, palette indices (COLOR), and line/marker styles.
+
 Usage:
     python eval/plots.py [--results-dir results] [--output-dir results/figures]
 
@@ -20,23 +23,45 @@ Generates:
 from __future__ import annotations
 
 import argparse
+import importlib.util
 import json
-import math
 import sys
 from pathlib import Path
 from statistics import mean
 
 import matplotlib
+
+ROOT = Path(__file__).resolve().parents[1]
+PRETTY_PLOTS_DIR = ROOT.parent / "pretty-plots"
+sys.path.insert(0, str(ROOT))
+
+
+def _load_pretty_plots_utils():
+    """Load sibling `pretty-plots/utils.py` (publication rcParams, palettes, helpers)."""
+    path = PRETTY_PLOTS_DIR / "utils.py"
+    if not path.is_file():
+        raise FileNotFoundError(
+            f"pretty-plots not found at {path}. Clone or place pretty-plots next to this repo."
+        )
+    spec = importlib.util.spec_from_file_location("pretty_plots_utils", path)
+    mod = importlib.util.module_from_spec(spec)
+    assert spec.loader is not None
+    spec.loader.exec_module(mod)
+    return mod
+
+
+_pp = _load_pretty_plots_utils()
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
-import matplotlib.ticker as mticker
 import numpy as np
 import seaborn as sns
 
-ROOT = Path(__file__).resolve().parents[1]
-sys.path.insert(0, str(ROOT))
-
 from agent.market_state import load_task  # noqa: E402
+
+# pretty-plots: seaborn "deep" palette via C0–C9, line/marker styles
+COLOR = _pp.COLOR
+LINESTYLE = _pp.LINESTYLE
+MARKER = _pp.MARKER
 
 SYSTEM_ORDER = ["random", "single_prompt", "frontier_tool", "market_only", "kalibrate"]
 SYSTEM_LABELS = {
@@ -46,23 +71,32 @@ SYSTEM_LABELS = {
     "market_only": "Market-Only\n(B4)",
     "kalibrate": "KALIBRATE\n(Ours)",
 }
+# Muted, distinguishable mapping: neutral baseline → baselines → accent (ours)
 SYSTEM_COLORS = {
-    "random": "#9ca3af",
-    "single_prompt": "#60a5fa",
-    "frontier_tool": "#34d399",
-    "market_only": "#fbbf24",
-    "kalibrate": "#f472b6",
+    "random": COLOR[7],
+    "single_prompt": COLOR[0],
+    "frontier_tool": COLOR[2],
+    "market_only": COLOR[1],
+    "kalibrate": COLOR[4],
 }
 DIFFICULTY_ORDER = ["easy", "medium", "hard"]
 
-sns.set_theme(style="whitegrid", font_scale=1.05)
+sns.set_style(
+    "whitegrid",
+    {"axes.edgecolor": ".15", "grid.color": ".92", "axes.grid": True},
+)
+sns.set_context("notebook", font_scale=1.05)
 plt.rcParams.update({
     "figure.dpi": 180,
     "savefig.dpi": 180,
     "savefig.bbox": "tight",
-    "font.family": "sans-serif",
     "axes.titleweight": "bold",
+    "axes.labelweight": "medium",
+    "grid.alpha": 0.45,
 })
+
+# Heatmap: perceptually uniform (lower Brier = darker = better in viridis)
+_HEATMAP_CMAP = sns.color_palette("viridis", as_cmap=True)
 
 
 def load_results(results_dir: Path) -> list[dict]:
@@ -150,8 +184,19 @@ def plot_overall_bar(summary: dict, metric: str, ylabel: str, title: str, out: P
 
     fig, ax = plt.subplots(figsize=(8, 4.5))
     x = np.arange(len(systems))
-    bars = ax.bar(x, means, yerr=stds, capsize=5, color=colors, edgecolor="white",
-                  linewidth=1.2, zorder=3, width=0.6)
+    err_kw = dict(ecolor="0.25", lw=1.1, capsize=5, capthick=1.1)
+    bars = ax.bar(
+        x,
+        means,
+        yerr=stds,
+        color=colors,
+        edgecolor="0.12",
+        linewidth=1,
+        zorder=3,
+        width=0.62,
+        error_kw=err_kw,
+        clip_on=False,
+    )
     for bar, val in zip(bars, means):
         ax.text(bar.get_x() + bar.get_width() / 2, bar.get_height() + max(stds) * 0.15 + 0.005,
                 f"{val:.3f}", ha="center", va="bottom", fontsize=10, fontweight="bold")
@@ -160,8 +205,8 @@ def plot_overall_bar(summary: dict, metric: str, ylabel: str, title: str, out: P
     ax.set_ylabel(ylabel, fontsize=12)
     ax.set_title(title, fontsize=14, pad=12)
     ax.set_ylim(0, max(means) * 1.35 + 0.02)
-    ax.grid(axis="y", alpha=0.3)
-    sns.despine(left=True)
+    ax.grid(axis="y", alpha=0.35)
+    sns.despine()
     fig.tight_layout()
     fig.savefig(out)
     plt.close(fig)
@@ -180,12 +225,13 @@ def plot_per_task_heatmap(per_task: dict, task_meta: dict, out: Path):
     labels_x = [f"{t}\n{task_meta[t]['domain'][:8]}" for t in tasks]
 
     fig, ax = plt.subplots(figsize=(12, 4.5))
-    im = ax.imshow(arr, cmap="RdYlGn_r", aspect="auto", vmin=0, vmax=0.35)
+    im = ax.imshow(arr, cmap=_HEATMAP_CMAP, aspect="auto", vmin=0, vmax=0.35)
     for i in range(len(systems)):
         for j in range(len(tasks)):
             val = arr[i, j]
-            color = "white" if val > 0.2 else "black"
-            ax.text(j, i, f"{val:.3f}", ha="center", va="center", fontsize=9, color=color)
+            # viridis: dark (low Brier) → light text; bright (high Brier) → dark text
+            txt_color = "white" if val < 0.16 else "black"
+            ax.text(j, i, f"{val:.3f}", ha="center", va="center", fontsize=9, color=txt_color)
     ax.set_xticks(range(len(tasks)))
     ax.set_xticklabels(labels_x, fontsize=9)
     ax.set_yticks(range(len(systems)))
@@ -208,8 +254,17 @@ def plot_by_difficulty(by_diff: dict, out: Path):
     for i, s in enumerate(systems):
         vals = [by_diff[s].get(d, 0) for d in DIFFICULTY_ORDER]
         offset = (i - n / 2 + 0.5) * width
-        bars = ax.bar(x + offset, vals, width, label=_sys_label(s).replace("\n", " "),
-                      color=_sys_color(s), edgecolor="white", linewidth=0.8, zorder=3)
+        bars = ax.bar(
+            x + offset,
+            vals,
+            width,
+            label=_sys_label(s).replace("\n", " "),
+            color=_sys_color(s),
+            edgecolor="0.12",
+            linewidth=0.9,
+            zorder=3,
+            clip_on=False,
+        )
         for bar, v in zip(bars, vals):
             if v > 0.01:
                 ax.text(bar.get_x() + bar.get_width() / 2, bar.get_height() + 0.005,
@@ -218,9 +273,9 @@ def plot_by_difficulty(by_diff: dict, out: Path):
     ax.set_xticklabels([d.capitalize() for d in DIFFICULTY_ORDER], fontsize=12)
     ax.set_ylabel("Mean Brier Score", fontsize=12)
     ax.set_title("Performance by Task Difficulty", fontsize=14, pad=12)
-    ax.legend(fontsize=8, ncol=3, loc="upper left")
-    ax.grid(axis="y", alpha=0.3)
-    sns.despine(left=True)
+    ax.legend(fontsize=8, ncol=3, loc="upper left", framealpha=0.95)
+    ax.grid(axis="y", alpha=0.35)
+    sns.despine()
     fig.tight_layout()
     fig.savefig(out)
     plt.close(fig)
@@ -231,8 +286,8 @@ def plot_calibration(results: list[dict], out: Path):
     n_bins = 5
     systems = [s for s in SYSTEM_ORDER if s != "random"]
     fig, ax = plt.subplots(figsize=(6, 6))
-    ax.plot([0, 1], [0, 1], "k--", alpha=0.4, label="Perfect calibration")
-    for s in systems:
+    ax.plot([0, 1], [0, 1], color="0.35", linestyle="--", alpha=0.75, label="Perfect calibration")
+    for idx, s in enumerate(systems):
         runs = [r for r in results if r["system"] == s]
         if not runs:
             continue
@@ -247,16 +302,26 @@ def plot_calibration(results: list[dict], out: Path):
             if bp:
                 bin_means_p.append(mean(bp))
                 bin_means_y.append(mean(by))
-        ax.plot(bin_means_p, bin_means_y, "o-", color=_sys_color(s),
-                label=_sys_label(s).replace("\n", " "), markersize=7, linewidth=2)
+        ax.plot(
+            bin_means_p,
+            bin_means_y,
+            color=_sys_color(s),
+            linestyle=LINESTYLE[idx % len(LINESTYLE)],
+            marker=MARKER[idx % len(MARKER)],
+            label=_sys_label(s).replace("\n", " "),
+            markersize=8,
+            linewidth=2,
+            clip_on=False,
+        )
     ax.set_xlabel("Mean Predicted Probability", fontsize=12)
     ax.set_ylabel("Observed Frequency (YES)", fontsize=12)
     ax.set_title("Calibration Plot", fontsize=14, pad=10)
     ax.set_xlim(-0.02, 1.02)
     ax.set_ylim(-0.02, 1.02)
     ax.set_aspect("equal")
-    ax.legend(fontsize=8, loc="upper left")
-    ax.grid(alpha=0.3)
+    ax.legend(fontsize=8, loc="upper left", framealpha=0.95)
+    ax.grid(alpha=0.35)
+    sns.despine()
     fig.tight_layout()
     fig.savefig(out)
     plt.close(fig)
@@ -271,7 +336,16 @@ def plot_runtime(runtimes: dict, out: Path):
 
     fig, ax = plt.subplots(figsize=(8, 4.5))
     x = np.arange(len(systems))
-    bars = ax.bar(x, means, color=colors, edgecolor="white", linewidth=1.2, zorder=3, width=0.6)
+    bars = ax.bar(
+        x,
+        means,
+        color=colors,
+        edgecolor="0.12",
+        linewidth=1,
+        zorder=3,
+        width=0.62,
+        clip_on=False,
+    )
     for bar, val in zip(bars, means):
         ax.text(bar.get_x() + bar.get_width() / 2, bar.get_height() + 0.3,
                 f"{val:.1f}s", ha="center", va="bottom", fontsize=10, fontweight="bold")
@@ -279,8 +353,8 @@ def plot_runtime(runtimes: dict, out: Path):
     ax.set_xticklabels(labels, fontsize=10)
     ax.set_ylabel("Mean Runtime (seconds)", fontsize=12)
     ax.set_title("Average Runtime per Forecast", fontsize=14, pad=12)
-    ax.grid(axis="y", alpha=0.3)
-    sns.despine(left=True)
+    ax.grid(axis="y", alpha=0.35)
+    sns.despine()
     fig.tight_layout()
     fig.savefig(out)
     plt.close(fig)
@@ -295,21 +369,30 @@ def plot_radar(summary: dict, out: Path):
     angles = np.linspace(0, 2 * np.pi, len(metrics), endpoint=False).tolist()
     angles += angles[:1]
 
-    for s in systems:
+    for idx, s in enumerate(systems):
         vals = [
             1 - summary[s]["brier_mean"],
             1 - min(1.0, summary[s]["logloss_mean"]),
             summary[s]["tsr_mean"],
         ]
         vals += vals[:1]
-        ax.plot(angles, vals, "o-", label=_sys_label(s).replace("\n", " "),
-                color=_sys_color(s), linewidth=2, markersize=6)
-        ax.fill(angles, vals, alpha=0.08, color=_sys_color(s))
+        ax.plot(
+            angles,
+            vals,
+            linestyle=LINESTYLE[idx % len(LINESTYLE)],
+            marker=MARKER[idx % len(MARKER)],
+            label=_sys_label(s).replace("\n", " "),
+            color=_sys_color(s),
+            linewidth=2,
+            markersize=7,
+            clip_on=False,
+        )
+        ax.fill(angles, vals, alpha=0.09, color=_sys_color(s))
     ax.set_xticks(angles[:-1])
     ax.set_xticklabels(metrics, fontsize=11)
     ax.set_ylim(0, 1.05)
     ax.set_title("Multi-Metric System Profile", fontsize=14, pad=20)
-    ax.legend(fontsize=8, loc="upper right", bbox_to_anchor=(1.3, 1.1))
+    ax.legend(fontsize=8, loc="upper right", bbox_to_anchor=(1.3, 1.1), framealpha=0.95)
     fig.tight_layout()
     fig.savefig(out)
     plt.close(fig)
@@ -327,16 +410,25 @@ def plot_per_task_grouped(per_task: dict, task_meta: dict, out: Path):
     for i, s in enumerate(systems):
         vals = [per_task[s].get(t, 0) for t in tasks]
         offset = (i - n / 2 + 0.5) * width
-        ax.bar(x + offset, vals, width, label=_sys_label(s).replace("\n", " "),
-               color=_sys_color(s), edgecolor="white", linewidth=0.6, zorder=3)
+        ax.bar(
+            x + offset,
+            vals,
+            width,
+            label=_sys_label(s).replace("\n", " "),
+            color=_sys_color(s),
+            edgecolor="0.12",
+            linewidth=0.7,
+            zorder=3,
+            clip_on=False,
+        )
     ax.set_xticks(x)
     labels = [f"{t}\n({task_meta[t]['difficulty'][:3]})" for t in tasks]
     ax.set_xticklabels(labels, fontsize=9)
     ax.set_ylabel("Mean Brier Score", fontsize=12)
     ax.set_title("Per-Task Brier Score Comparison", fontsize=14, pad=12)
-    ax.legend(fontsize=8, ncol=5, loc="upper center")
-    ax.grid(axis="y", alpha=0.3)
-    sns.despine(left=True)
+    ax.legend(fontsize=8, ncol=5, loc="upper center", framealpha=0.95)
+    ax.grid(axis="y", alpha=0.35)
+    sns.despine()
     fig.tight_layout()
     fig.savefig(out)
     plt.close(fig)
@@ -345,19 +437,30 @@ def plot_per_task_grouped(per_task: dict, task_meta: dict, out: Path):
 
 def plot_confidence_vs_brier(results: list[dict], out: Path):
     fig, ax = plt.subplots(figsize=(7, 5))
-    for s in SYSTEM_ORDER:
+    for idx, s in enumerate(SYSTEM_ORDER):
         runs = [r for r in results if r["system"] == s and "confidence" in r]
         if not runs:
             continue
         confs = [r["confidence"] for r in runs]
         briers = [r["brier"] for r in runs]
-        ax.scatter(confs, briers, alpha=0.55, s=40, color=_sys_color(s),
-                   label=_sys_label(s).replace("\n", " "), edgecolors="white", linewidth=0.5)
+        ax.scatter(
+            confs,
+            briers,
+            alpha=0.58,
+            s=42,
+            color=_sys_color(s),
+            marker=MARKER[idx % len(MARKER)],
+            label=_sys_label(s).replace("\n", " "),
+            edgecolors="0.15",
+            linewidth=0.55,
+            clip_on=False,
+        )
     ax.set_xlabel("Self-Reported Confidence", fontsize=12)
     ax.set_ylabel("Brier Score", fontsize=12)
     ax.set_title("Confidence vs Actual Brier Score", fontsize=14, pad=10)
-    ax.legend(fontsize=8)
-    ax.grid(alpha=0.3)
+    ax.legend(fontsize=8, framealpha=0.95)
+    ax.grid(alpha=0.35)
+    sns.despine()
     fig.tight_layout()
     fig.savefig(out)
     plt.close(fig)
@@ -373,17 +476,39 @@ def plot_price_histories(task_meta: dict, out: Path):
         meta = task_meta[tid]
         ph = meta.get("price_history", [])
         outcome = meta.get("outcome", 0)
-        ax.plot(range(len(ph)), ph, "o-", color="#3b82f6", linewidth=2, markersize=5)
-        ax.axhline(y=outcome, color="#ef4444" if outcome == 0 else "#22c55e",
-                    linestyle="--", alpha=0.6, linewidth=1.5)
+        ax.plot(
+            range(len(ph)),
+            ph,
+            linestyle=LINESTYLE[0],
+            marker=MARKER[0],
+            color=COLOR[0],
+            linewidth=2,
+            markersize=5,
+            clip_on=False,
+        )
+        ax.axhline(
+            y=outcome,
+            color=COLOR[3] if outcome == 0 else COLOR[2],
+            linestyle="--",
+            alpha=0.72,
+            linewidth=1.5,
+        )
         ax.set_title(f"{tid} ({meta['difficulty'][:3]})", fontsize=10, fontweight="bold")
         ax.set_ylim(-0.05, 1.05)
         ax.set_xlabel("Time step", fontsize=8)
         if i % 5 == 0:
             ax.set_ylabel("Implied P(YES)", fontsize=9)
-        ax.grid(alpha=0.3)
-        ax.text(0.97, 0.03, f"y={outcome}", transform=ax.transAxes, ha="right", fontsize=8,
-                color="#22c55e" if outcome else "#ef4444", fontweight="bold")
+        ax.grid(alpha=0.35)
+        ax.text(
+            0.97,
+            0.03,
+            f"y={outcome}",
+            transform=ax.transAxes,
+            ha="right",
+            fontsize=8,
+            color=COLOR[2] if outcome else COLOR[3],
+            fontweight="bold",
+        )
     fig.suptitle("POPCAST Task Price Histories (dashed = outcome)", fontsize=14, fontweight="bold")
     fig.tight_layout(rect=[0, 0, 1, 0.95])
     fig.savefig(out)
@@ -403,23 +528,42 @@ def plot_dashboard(summary: dict, per_task: dict, by_diff: dict, task_meta: dict
     stds = [summary[s]["brier_std"] for s in systems]
     colors = [_sys_color(s) for s in systems]
     x = np.arange(len(systems))
-    ax1.bar(x, means, yerr=stds, capsize=4, color=colors, edgecolor="white", linewidth=1, width=0.6)
+    err_kw = dict(ecolor="0.25", lw=1.0, capsize=4, capthick=1.0)
+    ax1.bar(
+        x,
+        means,
+        yerr=stds,
+        color=colors,
+        edgecolor="0.12",
+        linewidth=1,
+        width=0.6,
+        error_kw=err_kw,
+        clip_on=False,
+    )
     ax1.set_xticks(x)
     ax1.set_xticklabels([_sys_label(s) for s in systems], fontsize=7)
     ax1.set_ylabel("Brier Score")
     ax1.set_title("Overall Brier Score", fontweight="bold")
-    ax1.grid(axis="y", alpha=0.3)
+    ax1.grid(axis="y", alpha=0.35)
 
     # 2) TSR bar
     ax2 = fig.add_subplot(gs[0, 1])
     tsrs = [summary[s]["tsr_mean"] for s in systems]
-    ax2.bar(x, tsrs, color=colors, edgecolor="white", linewidth=1, width=0.6)
+    ax2.bar(
+        x,
+        tsrs,
+        color=colors,
+        edgecolor="0.12",
+        linewidth=1,
+        width=0.6,
+        clip_on=False,
+    )
     ax2.set_xticks(x)
     ax2.set_xticklabels([_sys_label(s) for s in systems], fontsize=7)
     ax2.set_ylabel("TSR")
     ax2.set_title("Task Success Rate", fontweight="bold")
     ax2.set_ylim(0, 1.1)
-    ax2.grid(axis="y", alpha=0.3)
+    ax2.grid(axis="y", alpha=0.35)
 
     # 3) By difficulty
     ax3 = fig.add_subplot(gs[0, 2])
@@ -429,24 +573,32 @@ def plot_dashboard(summary: dict, per_task: dict, by_diff: dict, task_meta: dict
     for i, s in enumerate(systems):
         vals = [by_diff.get(s, {}).get(d, 0) for d in DIFFICULTY_ORDER]
         offset = (i - n / 2 + 0.5) * width
-        ax3.bar(xd + offset, vals, width, color=_sys_color(s), edgecolor="white", linewidth=0.5)
+        ax3.bar(
+            xd + offset,
+            vals,
+            width,
+            color=_sys_color(s),
+            edgecolor="0.12",
+            linewidth=0.55,
+            clip_on=False,
+        )
     ax3.set_xticks(xd)
     ax3.set_xticklabels([d.capitalize() for d in DIFFICULTY_ORDER])
     ax3.set_ylabel("Mean Brier")
     ax3.set_title("By Difficulty", fontweight="bold")
-    ax3.grid(axis="y", alpha=0.3)
+    ax3.grid(axis="y", alpha=0.35)
 
     # 4) Per-task heatmap
     ax4 = fig.add_subplot(gs[1, 0:2])
     tasks = sorted(task_meta.keys(), key=lambda t: int(t[1:]))
     sys_in = [s for s in SYSTEM_ORDER if s in per_task]
     matrix = np.array([[per_task[s].get(t, float("nan")) for t in tasks] for s in sys_in])
-    im = ax4.imshow(matrix, cmap="RdYlGn_r", aspect="auto", vmin=0, vmax=0.35)
+    im = ax4.imshow(matrix, cmap=_HEATMAP_CMAP, aspect="auto", vmin=0, vmax=0.35)
     for i in range(len(sys_in)):
         for j in range(len(tasks)):
             v = matrix[i, j]
-            c = "white" if v > 0.2 else "black"
-            ax4.text(j, i, f"{v:.3f}", ha="center", va="center", fontsize=8, color=c)
+            txt_color = "white" if v < 0.16 else "black"
+            ax4.text(j, i, f"{v:.3f}", ha="center", va="center", fontsize=8, color=txt_color)
     ax4.set_xticks(range(len(tasks)))
     ax4.set_xticklabels(tasks, fontsize=9)
     ax4.set_yticks(range(len(sys_in)))
@@ -456,8 +608,9 @@ def plot_dashboard(summary: dict, per_task: dict, by_diff: dict, task_meta: dict
 
     # 5) Calibration
     ax5 = fig.add_subplot(gs[1, 2])
-    ax5.plot([0, 1], [0, 1], "k--", alpha=0.4)
-    for s in [s for s in SYSTEM_ORDER if s != "random"]:
+    ax5.plot([0, 1], [0, 1], color="0.35", linestyle="--", alpha=0.75)
+    cal_systems = [s for s in SYSTEM_ORDER if s != "random"]
+    for idx, s in enumerate(cal_systems):
         runs = [r for r in results if r["system"] == s]
         if not runs:
             continue
@@ -472,16 +625,25 @@ def plot_dashboard(summary: dict, per_task: dict, by_diff: dict, task_meta: dict
             if bp:
                 bmp.append(mean(bp))
                 bmy.append(mean(by))
-        ax5.plot(bmp, bmy, "o-", color=_sys_color(s), linewidth=2, markersize=5,
-                 label=_sys_label(s).replace("\n", " "))
+        ax5.plot(
+            bmp,
+            bmy,
+            color=_sys_color(s),
+            linestyle=LINESTYLE[idx % len(LINESTYLE)],
+            marker=MARKER[idx % len(MARKER)],
+            linewidth=2,
+            markersize=5,
+            label=_sys_label(s).replace("\n", " "),
+            clip_on=False,
+        )
     ax5.set_xlabel("Predicted P")
     ax5.set_ylabel("Observed freq")
     ax5.set_title("Calibration", fontweight="bold")
     ax5.set_xlim(-0.02, 1.02)
     ax5.set_ylim(-0.02, 1.02)
     ax5.set_aspect("equal")
-    ax5.legend(fontsize=6)
-    ax5.grid(alpha=0.3)
+    ax5.legend(fontsize=6, framealpha=0.95)
+    ax5.grid(alpha=0.35)
 
     fig.suptitle("POPCAST Benchmark — KALIBRATE Evaluation Dashboard",
                  fontsize=16, fontweight="bold", y=0.98)
