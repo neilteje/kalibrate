@@ -109,26 +109,42 @@ python3 -m kalshi.copilot_server --port 8765 --tool-budget 1
 
 ## Running the Benchmark
 
-### Validate task files
+### End-to-end pipeline (recommended)
 
 ```bash
+# 1. Validate all 10 POPCAST task files
 python3 benchmark/validator.py
+
+# 2. Fetch real Kalshi Demo API market data + enrich tasks
+python3 eval/fetch_kalshi_markets.py
+
+# 3. Run full benchmark: 5 systems x 10 tasks x 3 trials
+python3 eval/run_eval.py --trials 3 --overwrite
+
+# 4. Generate summary tables + LaTeX output
+python3 eval/report.py
+
+# 5. Generate all 12 publication-quality plots
+python3 eval/plots.py
 ```
 
-### Sanity test (no API keys required)
+### Kalshi API data enrichment
 
 ```bash
-python3 eval/run_eval.py --systems random
-python3 eval/report.py
+python3 eval/fetch_kalshi_markets.py
 ```
 
-### Run the full benchmark
+Fetches 1000+ open markets from the Kalshi Demo API, pulls orderbooks for active markets, computes aggregate market statistics (volume, spreads, depth), and writes:
+- `results/kalshi_snapshots/api_snapshot.json` — raw API data dump
+- `results/kalshi_snapshots/enriched_tasks/T*.json` — POPCAST tasks with `kalshi_api_context` block containing real API data
+
+### Running evaluations
 
 ```bash
 python3 eval/run_eval.py --trials 3
 ```
 
-This evaluates every system on every task with 3 trials for non-deterministic systems. Results land in `results/{system}__{task_id}__trial{n}.json`. The harness is **resumable**: if a run already exists for a (system, task, trial) triple it is skipped unless `--overwrite` is passed.
+Evaluates every system on every task with 3 trials for non-deterministic systems. Results land in `results/{system}__{task_id}__trial{n}.json`. The harness is **resumable**: if a run already exists for a (system, task, trial) triple it is skipped unless `--overwrite` is passed.
 
 To run a subset (smoke test):
 
@@ -143,6 +159,29 @@ python3 eval/report.py
 ```
 
 Writes `results/summary.csv`, `results/per_task.csv`, `results/by_difficulty.csv` and prints LaTeX-ready snippets to stdout for direct paste into the agent paper.
+
+### Generate plots
+
+```bash
+python3 eval/plots.py [--output-dir results/figures]
+```
+
+Generates 12 publication-quality figures in `results/figures/`:
+
+| Plot | Description |
+|------|-------------|
+| `overall_brier.png` | System comparison — Brier score |
+| `overall_logloss.png` | System comparison — Log Loss |
+| `overall_tsr.png` | System comparison — Task Success Rate |
+| `per_task_heatmap.png` | Heatmap: Brier per (system, task) |
+| `per_task_grouped.png` | Grouped bars per task |
+| `by_difficulty.png` | Grouped bars by difficulty level |
+| `calibration.png` | Calibration plot (predicted vs observed) |
+| `confidence_vs_brier.png` | Self-reported confidence vs Brier |
+| `runtime_comparison.png` | Average runtime per system |
+| `radar.png` | Multi-metric radar chart |
+| `price_history_tasks.png` | POPCAST task price histories |
+| `dashboard.png` | Combined 2x3 dashboard overview |
 
 ## Cost Estimate
 
