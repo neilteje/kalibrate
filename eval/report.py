@@ -111,6 +111,19 @@ def build_by_difficulty(results: list[dict], task_meta: dict[str, dict]) -> dict
     return summary
 
 
+def build_by_domain(results: list[dict], task_meta: dict[str, dict]) -> dict:
+    out: dict = {}
+    for r in results:
+        domain = task_meta.get(r["task_id"], {}).get("domain", "unknown")
+        out.setdefault(r["system"], {}).setdefault(domain, []).append(r["brier"])
+    summary: dict = {}
+    for sys_name, by_domain in out.items():
+        summary[sys_name] = {
+            d: mean(vals) for d, vals in by_domain.items()
+        }
+    return summary
+
+
 def build_per_task(results: list[dict]) -> dict:
     """system -> task_id -> mean brier across trials."""
     grouped: dict = {}
@@ -175,6 +188,25 @@ def print_difficulty_latex(by_diff: dict, summary: dict):
     print(r"\end{tabular}")
 
 
+def print_domain_latex(by_domain: dict, task_meta: dict):
+    print("\n% --- By domain table ---")
+    domains = sorted({m["domain"] for m in task_meta.values()})
+    print(r"\begin{tabular}{l" + "c" * len(domains) + "}")
+    print(r"\toprule")
+    header = r"\textbf{System} " + " ".join(
+        f"& \\textbf{{{d.capitalize()}}}" for d in domains
+    ) + r" \\"
+    print(header)
+    print(r"\midrule")
+    for s in SYSTEM_ORDER:
+        if s not in by_domain:
+            continue
+        row = [f"{by_domain[s].get(d, float('nan')):.3f}" for d in domains]
+        print(f"{SYSTEM_DISPLAY[s]} & " + " & ".join(row) + r" \\")
+    print(r"\bottomrule")
+    print(r"\end{tabular}")
+
+
 def print_per_task_latex(per_task: dict, task_meta: dict):
     print("\n% --- Per-task table ---")
     print(r"\begin{tabular}{llccccc}")
@@ -208,6 +240,7 @@ def main():
 
     summary = build_overall(results)
     by_diff = build_by_difficulty(results, task_meta)
+    by_domain = build_by_domain(results, task_meta)
     per_task = build_per_task(results)
 
     # --- CSV writes ---
@@ -247,6 +280,15 @@ def main():
         ],
         ["system", "difficulty", "brier"],
     )
+    write_csv(
+        results_dir / "by_domain.csv",
+        [
+            {"system": s, "domain": d, "brier": v}
+            for s, dmap in by_domain.items()
+            for d, v in dmap.items()
+        ],
+        ["system", "domain", "brier"],
+    )
 
     # --- Console summary ---
     print("=" * 70)
@@ -266,6 +308,7 @@ def main():
 
     print_overall_latex(summary)
     print_difficulty_latex(by_diff, summary)
+    print_domain_latex(by_domain, task_meta)
     print_per_task_latex(per_task, task_meta)
 
 

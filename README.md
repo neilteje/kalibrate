@@ -46,10 +46,10 @@ kalibrate/
     report.py            # tables + LaTeX output
   kalshi/
     client.py            # signed Kalshi Demo API client
-    live_state.py        # live market -> KALIBRATE market state
-    forecast.py          # CLI for live Demo forecasting
-  results/               # raw run JSONs (gitignored)
-  docs/                  # papers (LaTeX)
+    live_state.py
+    forecast.py
+  results/
+  docs/
 ```
 
 ## Kalshi Demo Integration
@@ -151,73 +151,3 @@ To run a subset (smoke test):
 ```bash
 python3 eval/run_eval.py --systems kalibrate market_only --tasks T1 T2 T6 --trials 1
 ```
-
-### Generate report tables
-
-```bash
-python3 eval/report.py
-```
-
-Writes `results/summary.csv`, `results/per_task.csv`, `results/by_difficulty.csv` and prints LaTeX-ready snippets to stdout for direct paste into the agent paper.
-
-### Generate plots
-
-```bash
-python3 eval/plots.py [--output-dir results/figures]
-```
-
-Generates 12 publication-quality figures in `results/figures/`:
-
-| Plot | Description |
-|------|-------------|
-| `overall_brier.png` | System comparison — Brier score |
-| `overall_logloss.png` | System comparison — Log Loss |
-| `overall_tsr.png` | System comparison — Task Success Rate |
-| `per_task_heatmap.png` | Heatmap: Brier per (system, task) |
-| `per_task_grouped.png` | Grouped bars per task |
-| `by_difficulty.png` | Grouped bars by difficulty level |
-| `calibration.png` | Calibration plot (predicted vs observed) |
-| `confidence_vs_brier.png` | Self-reported confidence vs Brier |
-| `runtime_comparison.png` | Average runtime per system |
-| `radar.png` | Multi-metric radar chart |
-| `price_history_tasks.png` | POPCAST task price histories |
-| `dashboard.png` | Combined 2x3 dashboard overview |
-
-## Cost Estimate
-
-Single full evaluation run (5 systems x 10 tasks; 3 trials for non-deterministic systems):
-- ~30 KALIBRATE episodes (~$0.10-0.30 each = $3-9 total)
-- ~30 single-prompt baseline calls (~$0.02 each = ~$0.60)
-- ~30 frontier-tool baseline calls (~$0.15-0.40 each = $4-12)
-- ~10 market-only ablation calls (~$0.05 each = ~$0.50)
-- Total: roughly **$8-25** for one full evaluation pass.
-
-## Architecture
-
-See `docs/CS498DK_AgentPaperDraft.tex` for the full architecture description and pipeline diagram. The high-level flow:
-
-```
-Task JSON
-   |
-   v
-Market State Constructor  --> normalized JSON state
-   |
-   v
-Tool Router (budget B=3)  --> Tavily search (cutoff-filtered)
-   |
-   v
-Evidence Extractor        --> structured features per doc
-   |
-   v
-Forecaster (GPT-4o mini)  --> {p_hat, confidence, reasoning}
-   |
-   v
-Risk Controller           --> abstain or commit
-   |
-   v
-Forecast Output JSON
-```
-
-## Leakage Discipline
-
-All Tavily searches are filtered server-side: any document whose `published_date >= decision_timestamp` is dropped before reaching the agent. Tasks include a `notes_for_evaluation` field used only by the eval harness for ground-truth verification — never shown to the agent.
