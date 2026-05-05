@@ -10,6 +10,9 @@ This repo contains:
 - A Kalshi Demo integration that fetches live demo markets and runs KALIBRATE forecasts
 - LaTeX-ready report tables for our papers in `docs/`
 
+<img src="public/kalshi_copilot2.png" alt="Kalibrate" width="3200" />
+
+
 ## Setup
 
 ```bash
