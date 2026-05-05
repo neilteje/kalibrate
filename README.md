@@ -24,28 +24,28 @@ cp .env.example .env
 
 ```
 kalibrate/
-  agent/                 # KALIBRATE agent modules
+  agent/
     market_state.py
     tool_router.py
     evidence_extractor.py
     forecaster.py
     risk_controller.py
-    agent.py             # top-level run_episode()
-    llm_clients.py       # cached OpenAI/Anthropic/Tavily clients
-  baselines/             # 4 baseline implementations
+    agent.py
+    llm_clients.py
+  baselines/
     random_baseline.py
     single_prompt.py
     frontier_tool.py
     market_only.py
   benchmark/
-    scoring.py           # Brier, log loss, TSR
-    validator.py         # task JSON schema validator
-  tasks/                 # POPCAST tasks T1..T10
+    scoring.py
+    validator.py
+  tasks/
   eval/
-    run_eval.py          # main evaluation script
-    report.py            # tables + LaTeX output
+    run_eval.py
+    report.py
   kalshi/
-    client.py            # signed Kalshi Demo API client
+    client.py 
     live_state.py
     forecast.py
   results/
